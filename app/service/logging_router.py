@@ -1,14 +1,13 @@
 import logging
 from typing import Annotated, List, Optional
-from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
-import asyncio
 
 from core import settings
 from app.core.utils import CoreUtils
-from core.db_logging import AsyncDBLogger, LogRecord
+from core.db_logging import AsyncDBLogger
 
 logger = logging.getLogger(__name__)
 

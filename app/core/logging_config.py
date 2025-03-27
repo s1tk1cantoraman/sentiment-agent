@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Any, Optional
+from typing import  Optional
 import os
 
 from core.db_logging import AsyncDBLogHandler

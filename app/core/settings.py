@@ -1,8 +1,7 @@
 from typing import Annotated, Any
 
-from dotenv import find_dotenv
 from pydantic import BeforeValidator, HttpUrl, SecretStr, TypeAdapter, computed_field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 from schema.models import (
     AllModelEnum,

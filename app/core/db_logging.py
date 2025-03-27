@@ -1,9 +1,7 @@
-import asyncio
 import logging
 import sqlite3
 import sys
-import threading
-import time
+
 from dataclasses import dataclass
 from datetime import datetime
 from logging.handlers import QueueHandler, QueueListener
