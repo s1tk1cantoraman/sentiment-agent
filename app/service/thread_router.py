@@ -28,16 +28,36 @@ async def delete_thread(thread_id: str) -> ThreadDeleteResponse:
     """
     Delete a thread and its associated data using the thread_id.
     """
+    logger.info(f"Attempting to delete thread {thread_id}")
     try:
         async with AsyncSqliteSaver.from_conn_string("checkpoints.db") as saver:
-            # Delete all checkpoints associated with this thread_id
-            await saver.adelete({"thread_id": thread_id})
+            # Access the underlying SQLite connection
+            conn = saver.conn
+            
+            # Delete all checkpoints for this thread_id
+            async with conn.execute(
+                "DELETE FROM checkpoints WHERE thread_id = ?",
+                (thread_id,)
+            ):
+                pass
+                
+            # Delete all writes for this thread_id
+            async with conn.execute(
+                "DELETE FROM writes WHERE thread_id = ?",
+                (thread_id,)
+            ):
+                pass
+                
+            # Commit the changes
+            await conn.commit()
+            
+            logger.info(f"Thread {thread_id} successfully deleted from database")
             return ThreadDeleteResponse(
                 success=True,
                 message=f"Thread {thread_id} successfully deleted"
             )
     except Exception as e:
-        logger.error(f"Error deleting thread {thread_id}: {e}")
+        logger.error(f"Error deleting thread {thread_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete thread: {str(e)}"
