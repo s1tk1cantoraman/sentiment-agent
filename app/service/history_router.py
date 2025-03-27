@@ -34,13 +34,24 @@ def history(input: ChatHistoryInput) -> ChatHistory:
     Get chat history.
     """
     agent: CompiledStateGraph = get_agent(DEFAULT_AGENT)
-    state_snapshot = agent.get_state(
-        config=RunnableConfig(
-            configurable={
-                "thread_id": input.thread_id,
-            }
+    try:
+        state_snapshot = agent.get_state(
+            config=RunnableConfig(
+                configurable={
+                    "thread_id": input.thread_id,
+                }
+            )
         )
-    )
-    messages: list[AnyMessage] = state_snapshot.values["messages"]
-    chat_messages: list[ChatMessage] = [langchain_to_chat_message(m) for m in messages]
-    return ChatHistory(messages=chat_messages) 
+        # Check if state_snapshot exists and has 'messages' key
+        if state_snapshot and "messages" in state_snapshot.values:
+            messages: list[AnyMessage] = state_snapshot.values["messages"]
+            chat_messages: list[ChatMessage] = [langchain_to_chat_message(m) for m in messages]
+            return ChatHistory(messages=chat_messages)
+        else:
+            # Return empty history if thread exists but no messages
+            logger.info(f"Thread {input.thread_id} exists but has no messages")
+            return ChatHistory(messages=[])
+    except Exception as e:
+        # If thread doesn't exist or other error, return empty history
+        logger.info(f"Error retrieving history for thread {input.thread_id}: {str(e)}")
+        return ChatHistory(messages=[]) 
