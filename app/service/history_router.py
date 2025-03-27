@@ -9,7 +9,7 @@ from langgraph.graph.state import CompiledStateGraph
 from agents.agents import DEFAULT_AGENT, get_agent
 from core import settings
 from schema import ChatHistory, ChatHistoryInput, ChatMessage
-from service.utils import langchain_to_chat_message
+from core.utils import langchain_to_chat_message, CoreUtils
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +28,19 @@ def verify_bearer(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 @router.post("")
+@CoreUtils.exception_handling_decorator
 def history(input: ChatHistoryInput) -> ChatHistory:
     """
     Get chat history.
     """
     agent: CompiledStateGraph = get_agent(DEFAULT_AGENT)
-    try:
-        state_snapshot = agent.get_state(
-            config=RunnableConfig(
-                configurable={
-                    "thread_id": input.thread_id,
-                }
-            )
+    state_snapshot = agent.get_state(
+        config=RunnableConfig(
+            configurable={
+                "thread_id": input.thread_id,
+            }
         )
-        messages: list[AnyMessage] = state_snapshot.values["messages"]
-        chat_messages: list[ChatMessage] = [langchain_to_chat_message(m) for m in messages]
-        return ChatHistory(messages=chat_messages)
-    except Exception as e:
-        logger.error(f"An exception occurred: {e}")
-        raise HTTPException(status_code=500, detail="Unexpected error") 
+    )
+    messages: list[AnyMessage] = state_snapshot.values["messages"]
+    chat_messages: list[ChatMessage] = [langchain_to_chat_message(m) for m in messages]
+    return ChatHistory(messages=chat_messages) 

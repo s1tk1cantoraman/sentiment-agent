@@ -15,7 +15,7 @@ from langgraph.types import Command
 from agents.agents import DEFAULT_AGENT, get_agent
 from core import settings
 from schema import ChatMessage, StreamInput, UserInput
-from service.utils import (
+from app.core.utils import (
     convert_message_content_to_string,
     langchain_to_chat_message,
     remove_tool_calls,

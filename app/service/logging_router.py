@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 import asyncio
 
 from core import settings
-from service.utils import CoreUtils
+from app.core.utils import CoreUtils
 from core.db_logging import AsyncDBLogger, LogRecord
 
 logger = logging.getLogger(__name__)
