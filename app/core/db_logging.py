@@ -9,6 +9,7 @@ from datetime import datetime
 from logging.handlers import QueueHandler, QueueListener
 from queue import Queue
 from typing import Any, Dict, List, Optional
+import aiosqlite
 
 
 @dataclass
@@ -143,76 +144,81 @@ class AsyncDBLogHandler(logging.Handler):
 class AsyncDBLogger:
     """
     Utility class for working with the database logs.
-    Provides methods to query and analyze logs.
+    Provides methods to query and analyze logs asynchronously.
     """
     
     def __init__(self, db_path: str = "logs.db"):
         self.db_path = db_path
     
-    def get_logs(self, 
+    async def get_logs(self, 
                  level: Optional[str] = None, 
                  start_time: Optional[str] = None, 
                  end_time: Optional[str] = None, 
                  logger_name: Optional[str] = None,
                  limit: int = 100) -> List[LogRecord]:
-        """Query logs from the database with optional filters."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        query = "SELECT timestamp, level, logger_name, message, exc_info, thread_name, process_name, extra FROM logs WHERE 1=1"
-        params = []
-        
-        if level:
-            query += " AND level = ?"
-            params.append(level)
-        
-        if start_time:
-            query += " AND timestamp >= ?"
-            params.append(start_time)
-        
-        if end_time:
-            query += " AND timestamp <= ?"
-            params.append(end_time)
-        
-        if logger_name:
-            query += " AND logger_name = ?"
-            params.append(logger_name)
-        
-        query += " ORDER BY timestamp DESC LIMIT ?"
-        params.append(limit)
-        
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        
-        logs = []
-        for row in rows:
-            logs.append(LogRecord(
-                timestamp=row[0],
-                level=row[1],
-                logger_name=row[2],
-                message=row[3],
-                exc_info=row[4],
-                thread_name=row[5],
-                process_name=row[6],
-                extra=eval(row[7]) if row[7] else None
-            ))
-        
-        conn.close()
-        return logs
+        """Query logs from the database with optional filters asynchronously."""
+        async with aiosqlite.connect(self.db_path) as conn:
+            query = "SELECT timestamp, level, logger_name, message, exc_info, thread_name, process_name, extra FROM logs WHERE 1=1"
+            params = []
+            
+            if level:
+                query += " AND level = ?"
+                params.append(level)
+            
+            if start_time:
+                query += " AND timestamp >= ?"
+                params.append(start_time)
+            
+            if end_time:
+                query += " AND timestamp <= ?"
+                params.append(end_time)
+            
+            if logger_name:
+                query += " AND logger_name = ?"
+                params.append(logger_name)
+            
+            query += " ORDER BY timestamp DESC LIMIT ?"
+            params.append(limit)
+            
+            async with conn.execute(query, params) as cursor:
+                rows = await cursor.fetchall()
+            
+            logs = []
+            for row in rows:
+                logs.append(LogRecord(
+                    timestamp=row[0],
+                    level=row[1],
+                    logger_name=row[2],
+                    message=row[3],
+                    exc_info=row[4],
+                    thread_name=row[5],
+                    process_name=row[6],
+                    extra=eval(row[7]) if row[7] else None
+                ))
+            
+            return logs
     
-    def clear_old_logs(self, days: int = 30) -> int:
-        """Delete logs older than the specified number of days."""
+    async def clear_old_logs(self, days: int = 30) -> int:
+        """Delete logs older than the specified number of days asynchronously."""
         from datetime import datetime, timedelta
         
         cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("DELETE FROM logs WHERE timestamp < ?", (cutoff_date,))
-        deleted_count = cursor.rowcount
-        
-        conn.commit()
-        conn.close()
-        
-        return deleted_count 
+        async with aiosqlite.connect(self.db_path) as conn:
+            # First count how many will be deleted
+            async with conn.execute(
+                "SELECT COUNT(*) FROM logs WHERE timestamp < ?", 
+                (cutoff_date,)
+            ) as cursor:
+                row = await cursor.fetchone()
+                count_to_delete = row[0] if row else 0
+            
+            # Then do the deletion
+            await conn.execute(
+                "DELETE FROM logs WHERE timestamp < ?", 
+                (cutoff_date,)
+            )
+            
+            await conn.commit()
+            
+            return count_to_delete 

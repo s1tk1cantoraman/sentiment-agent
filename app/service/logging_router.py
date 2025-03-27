@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
+import asyncio
 
 from core import settings
 from service.utils import CoreUtils
@@ -38,14 +39,14 @@ def verify_bearer(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 @router.get("/level")
-@CoreUtils.exception_handling_decorator
-def get_log_level():
+@CoreUtils.aexception_handling_decorator
+async def get_log_level():
     """Get current log level."""
     return {"level": logging.getLogger().getEffectiveLevel()}
 
 @router.put("/level")
-@CoreUtils.exception_handling_decorator
-def update_log_level(update: LogLevelUpdate):
+@CoreUtils.aexception_handling_decorator
+async def update_log_level(update: LogLevelUpdate):
     """Update log level."""
     try:
         level = update.level.upper()
@@ -56,8 +57,8 @@ def update_log_level(update: LogLevelUpdate):
         raise HTTPException(status_code=400, detail=f"Invalid log level: {str(e)}")
 
 @router.get("/entries", response_model=List[LogEntry])
-@CoreUtils.exception_handling_decorator
-def get_logs(
+@CoreUtils.aexception_handling_decorator
+async def get_logs(
     level: Optional[str] = Query(None, description="Filter by log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"),
     start_time: Optional[str] = Query(None, description="Filter logs after this ISO timestamp (e.g., 2023-01-01T00:00:00)"),
     end_time: Optional[str] = Query(None, description="Filter logs before this ISO timestamp (e.g., 2023-01-01T23:59:59)"),
@@ -66,14 +67,18 @@ def get_logs(
 ):
     """Query logs from the database with optional filters."""
     db_logger = AsyncDBLogger(db_path=settings.LOG_DB_PATH)
-    logs = db_logger.get_logs(level, start_time, end_time, logger_name, limit)
+    
+    logs = await db_logger.get_logs(level, start_time, end_time, logger_name, limit)
+    
     return [LogEntry(**vars(log)) for log in logs]
 
 @router.delete("/cleanup")
-@CoreUtils.exception_handling_decorator
-def cleanup_logs(days: int = Query(30, ge=1, description="Delete logs older than this many days")):
+@CoreUtils.aexception_handling_decorator
+async def cleanup_logs(days: int = Query(30, ge=1, description="Delete logs older than this many days")):
     """Delete old logs from the database."""
     db_logger = AsyncDBLogger(db_path=settings.LOG_DB_PATH)
-    deleted_count = db_logger.clear_old_logs(days)
+    
+    deleted_count = await db_logger.clear_old_logs(days)
+    
     logger.info(f"Deleted {deleted_count} log entries older than {days} days")
     return {"message": f"Deleted {deleted_count} log entries older than {days} days"} 
