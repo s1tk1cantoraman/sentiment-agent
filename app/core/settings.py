@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     # Logging configuration
     LOG_LEVEL: str = "INFO"
+    LOG_DB_PATH: str = "logs/logs.db"
 
     def model_post_init(self, __context: Any) -> None:
         api_keys = {

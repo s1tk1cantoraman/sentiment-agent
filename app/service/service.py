@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Starting application...")
     
     # Setup logging first
-    setup_logging(settings.LOG_LEVEL)
+    setup_logging(settings.LOG_LEVEL, settings.LOG_DB_PATH)
     logger.info(f"Logging configured with level: {settings.LOG_LEVEL}")
     
     # Initialize checkpointer
