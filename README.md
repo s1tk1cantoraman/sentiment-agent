@@ -73,10 +73,3 @@ The following environment variables can be configured:
 - `LOG_LEVEL`: Logging level (default: "INFO")
 - `LOG_DB_PATH`: Path to store log database (default: "logs/logs.db")
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
