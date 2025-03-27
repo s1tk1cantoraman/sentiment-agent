@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     )
     LANGCHAIN_API_KEY: SecretStr | None = None
 
+    # Logging configuration
+    LOG_LEVEL: str = "INFO"
+
     def model_post_init(self, __context: Any) -> None:
         api_keys = {
             Provider.OPENAI: self.OPENAI_API_KEY

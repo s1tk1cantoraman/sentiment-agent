@@ -1,3 +1,4 @@
+from typing import Optional
 from langchain_core.messages import (
     AIMessage,
     BaseMessage,
@@ -7,8 +8,32 @@ from langchain_core.messages import (
 from langchain_core.messages import (
     ChatMessage as LangchainChatMessage,
 )
+from functools import wraps
+from pydantic import BaseModel
+from starlette import status
+import logging
 
 from schema import ChatMessage
+
+class ValidationError(BaseModel):
+    message: str
+    members: list[str] = []
+
+class Error(BaseModel):
+    code: Optional[str] = None
+    message: str
+    details: Optional[str] = None
+    data: Optional[dict] = None
+    validationErrors: Optional[list[ValidationError]] = None
+
+class ErrorResponse(BaseModel):
+    error: Error
+
+class JSONResponseException(Exception):
+    def __init__(self, status_code: int, message: str = None):
+        self.status_code = status_code
+        self.content = ErrorResponse(error={"message": message}).model_dump()
+
 
 
 def convert_message_content_to_string(content: str | list[str | dict]) -> str:
@@ -74,3 +99,47 @@ def remove_tool_calls(content: str | list[str | dict]) -> str | list[str | dict]
         for content_item in content
         if isinstance(content_item, str) or content_item["type"] != "tool_use"
     ]
+    
+class CoreUtils:
+
+    @staticmethod
+    def exception_handling_decorator(func):
+        logger = logging.getLogger(__name__)
+        
+        @wraps(func)
+        def wrap(*args, **kwargs):
+            try:
+                logger.debug(f"Calling {func.__name__} with args: {args}, kwargs: {kwargs}")
+                result = func(*args, **kwargs)
+                logger.debug(f"{func.__name__} completed successfully")
+                return result
+            except (Exception, JSONResponseException) as e:
+                logger.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
+                if type(e) is JSONResponseException:
+                    raise e
+                else:
+                    raise JSONResponseException(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                                f"An unexpected error has occured.  {str(e)}")
+
+        return wrap
+
+    @staticmethod
+    def aexception_handling_decorator(func):
+        logger = logging.getLogger(__name__)
+        
+        @wraps(func)
+        async def wrap(*args, **kwargs):
+            try:
+                logger.debug(f"Calling {func.__name__} with args: {args}, kwargs: {kwargs}")
+                result = await func(*args, **kwargs)
+                logger.debug(f"{func.__name__} completed successfully")
+                return result
+            except (Exception, JSONResponseException) as e:
+                logger.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
+                if type(e) is JSONResponseException:
+                    raise e
+                else:
+                    raise JSONResponseException(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                                f"An unexpected error has occured.  {str(e)}")
+
+        return wrap 

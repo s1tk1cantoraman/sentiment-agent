@@ -168,3 +168,7 @@ class ChatHistoryInput(BaseModel):
 
 class ChatHistory(BaseModel):
     messages: list[ChatMessage]
+
+class ThreadDeleteResponse(BaseModel):
+    success: bool
+    message: str 

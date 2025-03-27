@@ -8,16 +8,16 @@ if __name__ == "__main__":
     
     
 #TODO:
-# - refactor service.py
-# - refactor streamlit_app.py
 # - refactor readme
 # - create fresh requirements.txt with pip freeze > requirements.txt
 # - add error handling
-# - add a tool to the agent to ensure structured output
 # - remove unused code
 # - understand logging requirements and implement them
-# - add init to agents folder
 # - test with env variables removed and fresh install
 # - ask claude for coding best practices 
 # - push to github
 # - learn streamlit properly
+
+# Added support for error handling but havent implemented it yet
+# thread remove is not working
+# there is no logging yet
