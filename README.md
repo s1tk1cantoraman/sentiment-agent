@@ -59,17 +59,12 @@ The repository is structured as follows:
 
 ### Environment Variables
 
-The following environment variables can be configured:
+The following environment variables can be configured from app/core/settings.py:
 
 - `OPENAI_API_KEY`: API key for OpenAI models
 - `HOST`: Host to run the service on (default: "0.0.0.0")
 - `PORT`: Port to run the service on (default: 8081)
 - `AUTH_SECRET`: Secret for authentication (optional)
-- `LANGCHAIN_TRACING_V2`: Enable LangChain tracing (default: false)
-- `LANGCHAIN_PROJECT`: LangChain project name (default: "default")
-- `LANGCHAIN_ENDPOINT`: LangChain endpoint URL
-- `LANGCHAIN_API_KEY`: LangChain API key
-- `OPENWEATHERMAP_API_KEY`: API key for OpenWeatherMap (optional)
 - `LOG_LEVEL`: Logging level (default: "INFO")
 - `LOG_DB_PATH`: Path to store log database (default: "logs/logs.db")
 

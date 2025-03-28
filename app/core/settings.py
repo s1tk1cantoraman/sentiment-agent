@@ -30,15 +30,6 @@ class Settings(BaseSettings):
     DEFAULT_MODEL: AllModelEnum | None = None  # type: ignore[assignment]
     AVAILABLE_MODELS: set[AllModelEnum] = set()  # type: ignore[assignment]
 
-    OPENWEATHERMAP_API_KEY: SecretStr | None = None
-
-    LANGCHAIN_TRACING_V2: bool = False
-    LANGCHAIN_PROJECT: str = "default"
-    LANGCHAIN_ENDPOINT: Annotated[str, BeforeValidator(check_str_is_http)] = (
-        "https://api.smith.langchain.com"
-    )
-    LANGCHAIN_API_KEY: SecretStr | None = None
-
     # Logging configuration
     LOG_LEVEL: str = "INFO"
     LOG_DB_PATH: str = "logs/logs.db"
